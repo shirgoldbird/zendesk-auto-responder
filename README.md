@@ -17,11 +17,7 @@ Sample responses:
     * Check all associated Linear issues
     * If Linear issue has changes (customer should get an update) OR Zendesk ticket has changes (customer asked for an update)
         * Write a quick response indicating the current Linear status
-            * If status is ANYTHING but done,
-                * "Hi, the ticket for this work ([TICKET TITLE]) is currently [STATUS]. I'll be in touch with updates as soon as I have them."
-            * If status is done
-                * "Hi, happy to let you know this work ([TICKET TITLE]) is finished and should be available for you to test. Could you please give it a try and let me know how it works?
-    * Print out the pre-written message for each tick
+        * Print out the message for each ticket needing an update
 
 ## Set Up
 
