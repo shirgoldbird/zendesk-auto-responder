@@ -3,6 +3,14 @@
 ## Goal
 Automate responding to Zendesk tickets based on the status of the Linear tickets linked to them.
 
+Sample responses:
+
+> Hi all, the ticket for this work (TICKET_TITLE_REDACTED) is currently in the backlog. While I don't have a timeline right now for when this work will be complete, I'll be in touch with updates as soon as I have them.
+
+> Hi all, the ticket for this work (TICKET_TITLE_REDACTED) is currently in progress. I'll let you know as soon as it's ready to test.
+
+> Hi all, the ticket for this work (TICKET_TITLE_REDACTED) is currently in review. I'll let you know as soon as it's ready to test.
+
 ### Business Logic
 * Every day (cron job), go through all open Zendesk tickets assigned to me
 * For each ticket
