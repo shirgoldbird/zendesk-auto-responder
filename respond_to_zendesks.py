@@ -44,7 +44,7 @@ for ticket in zenpy_client.search(type='ticket', assignee=config["ZENDESK_ASSIGN
         write_response = False
     if ticket.status != "solved" and ticket.status != "closed":
         ticket_url = f"{base_ticket_url}{ticket.id}"
-        query = f"{{ attachmentsForURL(url: \"{ticket_url}\") {{ nodes {{ id issue {{ id identifier title updatedAt state {{ name }} }} }} }} }}"
+        query = f"{{ attachmentsForURL(url: \"{ticket_url}\") {{ nodes {{ id issue {{ id identifier title updatedAt priorityLabel state {{ name }} }} }} }} }}"
 
         data = client.execute(query=query)
         linked_linear_tickets = []
@@ -54,7 +54,8 @@ for ticket in zenpy_client.search(type='ticket', assignee=config["ZENDESK_ASSIGN
                 "linear_ticket_id": issue['identifier'],
                 "linear_ticket_status": issue['state']['name'],
                 "linear_last_updated": issue['updatedAt'],
-                "linear_ticket_title": issue['title']
+                "linear_ticket_title": issue['title'],
+                "linear_ticket_priority": issue['priorityLabel']
             })
 
         zendesk_ticket = {
@@ -109,6 +110,7 @@ for ticket in zenpy_client.search(type='ticket', assignee=config["ZENDESK_ASSIGN
                 linear_ticket = zendesk_ticket["linked_linear_tickets"][0]
                 cleaned_up_title = linear_ticket["linear_ticket_title"].split("]")[-1].strip()
                 cleaned_up_status = linear_ticket["linear_ticket_status"].lower()
+                cleaned_up_priority = linear_ticket["linear_ticket_priority"].lower()
                 ending_line = "I'll be in touch with updates as soon as I have them."
                 # actually clean up the title and status
                 if cleaned_up_title[-1] == ".":
@@ -116,7 +118,7 @@ for ticket in zenpy_client.search(type='ticket', assignee=config["ZENDESK_ASSIGN
                 if cleaned_up_status == "triage":
                     cleaned_up_status = "being prioritized"
                 elif cleaned_up_status == "backlog":
-                    cleaned_up_status = "in the backlog"
+                    cleaned_up_status = f"in the backlog as a {cleaned_up_priority} priority"
                     ending_line = f"While I don't have a timeline right now for when this work will be picked up, {ending_line}"
                 elif cleaned_up_status == "in progress" or cleaned_up_status == "in review":
                     ending_line = f"I'll let you know as soon as it's ready to test."
