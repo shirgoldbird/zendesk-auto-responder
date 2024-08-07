@@ -1,7 +1,9 @@
 # README
 
 ## Goal
-Automate responding to Zendesk tickets based on the status of the Linear tickets linked to them.
+Automate writing responses to Zendesk tickets based on the status of linked Linear tickets.
+
+⚠️ This script does NOT reply to the Zendesk ticket with the responses it writes. (That seems dangerous, eh?) This allows the user to review and customize the responses before sending.
 
 Sample responses:
 
