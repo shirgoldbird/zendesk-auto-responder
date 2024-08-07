@@ -1,0 +1,4 @@
+python-dotenv==1.0.1
+python_graphql_client==0.4.3
+tinydb==4.8.0
+zenpy==2.0.49
