@@ -117,7 +117,7 @@ for ticket in zenpy_client.search(type='ticket', assignee=config["ZENDESK_ASSIGN
                     cleaned_up_status = "being prioritized"
                 elif cleaned_up_status == "backlog":
                     cleaned_up_status = "in the backlog"
-                    ending_line = f"While I don't have a timeline right now for when this work will be complete, {ending_line}"
+                    ending_line = f"While I don't have a timeline right now for when this work will be picked up, {ending_line}"
                 elif cleaned_up_status == "in progress" or cleaned_up_status == "in review":
                     ending_line = f"I'll let you know as soon as it's ready to test."
                 elif cleaned_up_status == "done":
