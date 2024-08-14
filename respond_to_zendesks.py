@@ -22,6 +22,25 @@ credentials = {
 zenpy_client = Zenpy(**credentials)
 base_ticket_url = f"https://{config["ZENDESK_SUBDOMAIN"]}.zendesk.com/tickets/"
 
+class Style():
+  RED = "\033[31m"
+  GREEN = "\033[32m"
+  BLUE = "\033[34m"
+  RESET = "\033[0m"
+
+def link(uri, label=None):
+    if label is None: 
+        label = uri
+    parameters = ''
+
+    # OSC 8 ; params ; URI ST <name> OSC 8 ;; ST 
+    escape_mask = '\033]8;{};{}\033\\{}\033]8;;\033\\'
+
+    return escape_mask.format(parameters, uri, label)
+  
+def zendesk_ticket_formatter(zendesk_ticket):
+    return f"{Style.BLUE}Zendesk ticket {link('https://rutterapi.zendesk.com/agent/tickets/' + str(zendesk_ticket["zendesk_ticket_id"]), zendesk_ticket["zendesk_ticket_id"])}\n{zendesk_ticket["zendesk_ticket_title"]}{Style.RESET}"
+
 def compare_timestamp_strings(timestamp_str_1, timestamp_str_2):
     timestamp_1 = datetime.fromisoformat(timestamp_str_1)
     timestamp_2 = datetime.fromisoformat(timestamp_str_2)
@@ -39,9 +58,9 @@ def compare_timestamps(timestamp_1, timestamp_2):
 # Perform a simple search
 for ticket in zenpy_client.search(type='ticket', assignee=config["ZENDESK_ASSIGNEE_NAME"]):
     if config["ALWAYS_WRITE_RESPONSE"] == "true":
-        write_response = True
+        write_response = (True, None)
     else:
-        write_response = False
+        write_response = (False, None)
     if ticket.status != "solved" and ticket.status != "closed":
         ticket_url = f"{base_ticket_url}{ticket.id}"
         query = f"{{ attachmentsForURL(url: \"{ticket_url}\") {{ nodes {{ id issue {{ id identifier title updatedAt priorityLabel state {{ name }} }} }} }} }}"
@@ -68,7 +87,7 @@ for ticket in zenpy_client.search(type='ticket', assignee=config["ZENDESK_ASSIGN
         stored_zendesk_ticket = db.search(Ticket.zendesk_ticket_id == ticket.id)
         if len(stored_zendesk_ticket) == 0:
             db.insert(zendesk_ticket)
-            write_response = True
+            write_response = (True, "zendesk")
         elif len(stored_zendesk_ticket) > 1:
             print(f"Multiple DB rows found for Zendesk #{ticket.id}, please investigate. Skipping for now...")
             continue
@@ -94,18 +113,25 @@ for ticket in zenpy_client.search(type='ticket', assignee=config["ZENDESK_ASSIGN
                 linear_was_updated = False
 
             if linear_was_updated:
-                print("Linear was updated, will write response")
-                write_response = True
+                write_response = (True, "linear")
 
             if zendesk_was_updated:
-                print("Zendesk was updated, will write response")
-                write_response = True
+                write_response = (True, "zendesk")
                 
             db.update(zendesk_ticket, Ticket.zendesk_ticket_id == ticket.id)
 
         # now do some creative writing!
-        if write_response:
-            # TODO: handle >1 Linear ticket
+        if write_response[0]:
+            if write_response[1] == "linear":
+                print(f"{Style.GREEN}Linear ticket {zendesk_ticket["linked_linear_tickets"][0]["linear_ticket_id"]}{Style.RESET} was {Style.GREEN}updated{Style.RESET}, will write response")
+            elif write_response[1] == "zendesk":
+                print(zendesk_ticket_formatter(zendesk_ticket))
+                print(f"was {Style.GREEN}updated{Style.RESET}, will write response")
+            else:
+                print(zendesk_ticket_formatter(zendesk_ticket))
+                print(f"Nothing was updated, but ALWAYS_WRITE_RESPONSE is true, will write response")
+                
+            # TODO: handle edge case of >1 Linear ticket linked to Zendesk
             if len(zendesk_ticket["linked_linear_tickets"]) == 1:
                 linear_ticket = zendesk_ticket["linked_linear_tickets"][0]
                 cleaned_up_title = linear_ticket["linear_ticket_title"].split("]")[-1].strip()
@@ -126,4 +152,7 @@ for ticket in zenpy_client.search(type='ticket', assignee=config["ZENDESK_ASSIGN
                     ending_line = "Please test it out and let me know if it's working as expected."
 
                 print(f"Hi all, the ticket for this work ({cleaned_up_title}) is currently {cleaned_up_status}. {ending_line}")
+            else:
+                print(f"{Style.RED}More than one Linear ticket is linked, could not automatically write response!{Style.RESET}")
 
+            print("\n")
